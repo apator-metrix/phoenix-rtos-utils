@@ -18,8 +18,6 @@
 #include <time.h>
 
 #include <phoenix/arch/armv8m/stm32/u3/stm32u3.h>
-#include <stm32l4-multi.h>
-#include <sys/msg.h>
 
 #include "../psh.h"
 #include "u3app.h"
@@ -31,55 +29,26 @@ static struct {
 } u3push_common;
 
 
-static multi_i_t *_make_devctl(msg_t *msg, int type)
-{
-	msg->type = mtDevCtl;
-	msg->oid = u3app_common.multi;
-	msg->i.data = NULL;
-	msg->i.size = 0;
-	msg->o.data = NULL;
-	msg->o.size = 0;
-
-	multi_i_t *imsg = (multi_i_t *)msg->i.raw;
-	imsg->type = type;
-	return imsg;
-}
-
-
 static int _exti_map(int exti, int port)
 {
 	msg_t msg;
-	int err;
 
-	multi_i_t *imsg = _make_devctl(&msg, exti_map);
+	multi_i_t *imsg = u3_prepare_msg(&msg, exti_map);
 	imsg->exti_map.line = exti;
 	imsg->exti_map.port = port;
-
-	err = msgSend(u3app_common.multi.port, &msg);
-	if (err < 0) {
-		return err;
-	}
-
-	return msg.o.err;
+	return u3_send_msg(&msg);
 }
 
 
 static int _exti_config(int exti, unsigned char mode, unsigned char edge)
 {
 	msg_t msg;
-	int err;
 
-	multi_i_t *imsg = _make_devctl(&msg, exti_def);
+	multi_i_t *imsg = u3_prepare_msg(&msg, exti_def);
 	imsg->exti_def.line = exti;
 	imsg->exti_def.mode = mode;
 	imsg->exti_def.edge = edge;
-
-	err = msgSend(u3app_common.multi.port, &msg);
-	if (err < 0) {
-		return err;
-	}
-
-	return msg.o.err;
+	return u3_send_msg(&msg);
 }
 
 
@@ -93,7 +62,7 @@ static int _gpio_config(int port, char pin, char mode, char af, char otype, char
 {
 	msg_t msg;
 
-	multi_i_t *imsg = _make_devctl(&msg, gpio_def);
+	multi_i_t *imsg = u3_prepare_msg(&msg, gpio_def);
 	imsg->gpio_def.port = port;
 	imsg->gpio_def.pin = pin;
 	imsg->gpio_def.mode = mode;
@@ -101,13 +70,7 @@ static int _gpio_config(int port, char pin, char mode, char af, char otype, char
 	imsg->gpio_def.ospeed = ospeed;
 	imsg->gpio_def.otype = otype;
 	imsg->gpio_def.pupd = pupd;
-
-	int ret = msgSend(u3app_common.multi.port, &msg);
-	if (ret < 0) {
-		return ret;
-	}
-
-	return msg.o.err;
+	return u3_send_msg(&msg);
 }
 
 

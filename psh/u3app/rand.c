@@ -19,9 +19,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <stm32l4-multi.h>
-#include <sys/msg.h>
-
 #include "../psh.h"
 #include "u3app.h"
 
@@ -35,24 +32,11 @@ void u3rand_info(void)
 static int _rng_read(void *buff, size_t len)
 {
 	msg_t msg;
-	multi_i_t *imsg;
-	int err;
 
-	msg.type = mtDevCtl;
-	msg.oid = u3app_common.multi;
-	msg.i.data = NULL;
-	msg.i.size = 0;
+	u3_prepare_msg(&msg, rng_get);
 	msg.o.data = buff;
 	msg.o.size = len;
-
-	imsg = (multi_i_t *)msg.i.raw;
-	imsg->type = rng_get;
-	err = msgSend(u3app_common.multi.port, &msg);
-	if (err < 0) {
-		return err;
-	}
-
-	return msg.o.err;
+	return u3_send_msg(&msg);
 }
 
 
