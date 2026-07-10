@@ -16,12 +16,12 @@
 #ifndef PSH_U3APP_H
 #define PSH_U3APP_H
 
-#include <phoenix/types.h>
+#include <stm32l4-multi.h>
+#include <sys/msg.h>
 
-typedef struct {
-	oid_t multi;
-} u3app_common_t;
 
-extern u3app_common_t u3app_common;
+extern multi_i_t *u3_prepare_msg(msg_t *msg, int type);
+extern int u3_send_msg(msg_t *msg);
+
 
 #endif
