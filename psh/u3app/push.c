@@ -58,22 +58,6 @@ static int _exti_handler(unsigned int n, void *arg)
 }
 
 
-static int _gpio_config(int port, char pin, char mode, char af, char otype, char ospeed, char pupd)
-{
-	msg_t msg;
-
-	multi_i_t *imsg = u3_prepare_msg(&msg, gpio_def);
-	imsg->gpio_def.port = port;
-	imsg->gpio_def.pin = pin;
-	imsg->gpio_def.mode = mode;
-	imsg->gpio_def.af = af;
-	imsg->gpio_def.ospeed = ospeed;
-	imsg->gpio_def.otype = otype;
-	imsg->gpio_def.pupd = pupd;
-	return u3_send_msg(&msg);
-}
-
-
 void u3push_info(void)
 {
 	printf("wait until USER button is pushed");
@@ -82,19 +66,21 @@ void u3push_info(void)
 
 int u3push_run(int argc, char **argv)
 {
+	const u3pin_t USER_BUTTON = { gpioc, 13 };
+
 	int err;
 
-	if ((err = _exti_map(13, gpioc)) < 0) {
+	if ((err = _exti_map(USER_BUTTON.pin, USER_BUTTON.port)) < 0) {
 		fprintf(stderr, "\nu3push: _exti_map failed with %d!\n", err);
 		return EXIT_FAILURE;
 	}
 
-	if ((err = _gpio_config(gpioc, 13, gpio_mode_gpi, 0, gpio_otype_pp, gpio_ospeed_low, gpio_pupd_pulldn)) < 0) {
-		fprintf(stderr, "\nu3push: _gpio_config failed with %d!\n", err);
+	if ((err = u3pin_config(&USER_BUTTON, gpio_mode_gpi, 0, gpio_otype_pp, gpio_ospeed_low, gpio_pupd_pulldn)) < 0) {
+		fprintf(stderr, "\nu3push: u3pin_config failed with %d!\n", err);
 		return EXIT_FAILURE;
 	}
 
-	if ((err = _exti_config(13, exti_irq, exti_falling)) < 0) {
+	if ((err = _exti_config(USER_BUTTON.pin, exti_irq, exti_falling)) < 0) {
 		fprintf(stderr, "\nu3push: _exti_config failed with %d!\n", err);
 		return EXIT_FAILURE;
 	}
@@ -114,7 +100,7 @@ int u3push_run(int argc, char **argv)
 	}
 
 	pthread_condattr_destroy(&attr);
-	interrupt(exti13_irq, _exti_handler, NULL, u3push_common.icond.condh, NULL);
+	interrupt(exti0_irq + USER_BUTTON.pin, _exti_handler, NULL, u3push_common.icond.condh, NULL);
 
 	printf("u3push: push USER to continue...\n");
 	pthread_mutex_lock(&u3push_common.imutex);
