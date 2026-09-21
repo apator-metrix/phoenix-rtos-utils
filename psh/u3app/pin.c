@@ -211,9 +211,9 @@ static int _cmd_set(const u3pin_t *pin, int nargs, char *const args[])
 		return EXIT_FAILURE;
 	}
 
-	state = atoi(args[1]);
+	state = atoi(args[0]);
 	if (state < 0 || state > 1) {
-		fprintf(stderr, "\nu3pin: invalid state %s!\n", args[1]);
+		fprintf(stderr, "\nu3pin: invalid state %s!\n", args[0]);
 		return EXIT_FAILURE;
 	}
 
